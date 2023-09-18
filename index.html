@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Copy Paste Debug</title>
+</head>
+<body>
+<h2>Paste types:</h2>
+<code id="paste-types">
+  <i>paste content</i>
+</code>
+<h2>Paste data:</h2>
+<div id="paste-data">
+  <code><i>paste content</i></code>
+</div>
+<script>
+  document.body.addEventListener('paste', (e) => {
+    const types = e.clipboardData.types;
+    console.log(types);
+    document.querySelector('#paste-types').textContent = JSON.stringify(types)
+
+    const pasteDataElement = document.querySelector('#paste-data');
+    pasteDataElement.innerHTML = '';
+    types.forEach((type) => {
+      const div = document.createElement('div')
+      const heading = document.createElement('h3');
+      heading.innerText = type;
+      const content = document.createElement('code');
+
+      div.appendChild(heading);
+      div.appendChild(content)
+
+      if (type.includes('text/') || type == 'application/json' || type == 'application/xml') {
+        content.innerText = e.clipboardData.getData(type)
+      } else {
+        content.innerHTML = '<i>not serializable</i>'
+      }
+      pasteDataElement.appendChild(div)
+    })
+  })
+</script>
+</body>
+</html>
