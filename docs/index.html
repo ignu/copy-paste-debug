@@ -15,25 +15,34 @@
 </div>
 <script>
   document.body.addEventListener('paste', (e) => {
-    const types = e.clipboardData.types;
-    console.log(types);
-    document.querySelector('#paste-types').textContent = JSON.stringify(types)
+    const clipboardData = e.clipboardData;
+    const types = clipboardData.types;
+    document.querySelector('#paste-types').innerText = types.join('\n')
 
     const pasteDataElement = document.querySelector('#paste-data');
     pasteDataElement.innerHTML = '';
     types.forEach((type) => {
       const div = document.createElement('div')
       const heading = document.createElement('h3');
-      heading.innerText = type;
+      heading.innerText = `${type}`;
       const content = document.createElement('code');
 
       div.appendChild(heading);
       div.appendChild(content)
 
+      const data = clipboardData.getData(type);
+
+      if (type.includes('text/')) {
+        console.log(`${type}:\n\n${JSON.stringify(data)}`);
+      }
+
       if (type.includes('text/') || type == 'application/json' || type == 'application/xml') {
-        content.innerText = e.clipboardData.getData(type)
+        content.innerText = data
+      } else if (type === 'Files') {
+        const files = Array.from(clipboardData.files)
+        content.innerText = files.map(file => `${file.name} - ${file.type}, ${file.size}B`).join('\n')
       } else {
-        content.innerHTML = '<i>not serializable</i>'
+        content.innerText = data
       }
       pasteDataElement.appendChild(div)
     })
