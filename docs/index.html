@@ -5,6 +5,7 @@
   <title>Copy Paste Debug</title>
 </head>
 <body>
+<a id="download" href="#" type="text/json">download paste data</a>
 <h2>Paste types:</h2>
 <code id="paste-types">
   <i>paste content</i>
@@ -14,14 +15,42 @@
   <code><i>paste content</i></code>
 </div>
 <script>
+  let pasteData;
+
   document.body.addEventListener('paste', (e) => {
     const clipboardData = e.clipboardData;
     const types = clipboardData.types;
-    document.querySelector('#paste-types').innerText = types.join('\n')
+
+    // extract data
+    pasteData = {};
+    types.forEach((type) => {
+      const data = clipboardData.getData(type);
+
+      if (type.includes('text/')) {
+        console.log(`${type}:\n\n${JSON.stringify(data)}`);
+      }
+
+      let pasteTypeData;
+      if (type.includes('text/') || type === 'application/json' || type === 'application/xml') {
+        pasteTypeData = data;
+
+      } else if (type === 'Files') {
+        const files = Array.from(clipboardData.files)
+        pasteTypeData = files.map(file => `${file.name} - ${file.type}, ${file.size}B`).join('\n')
+      } else {
+        pasteTypeData = data;
+      }
+
+      pasteData[type] = pasteTypeData;
+    })
+
+    // render
+    document.querySelector('#paste-types').innerText = Object.keys(pasteData).join('\n')
 
     const pasteDataElement = document.querySelector('#paste-data');
     pasteDataElement.innerHTML = '';
-    types.forEach((type) => {
+
+    Object.entries(pasteData).map(([type, data]) => {
       const div = document.createElement('div')
       const heading = document.createElement('h3');
       heading.innerText = `${type}`;
@@ -30,23 +59,20 @@
       div.appendChild(heading);
       div.appendChild(content)
 
-      const data = clipboardData.getData(type);
+      content.innerText = data
 
-      if (type.includes('text/')) {
-        console.log(`${type}:\n\n${JSON.stringify(data)}`);
-      }
-
-      if (type.includes('text/') || type == 'application/json' || type == 'application/xml') {
-        content.innerText = data
-      } else if (type === 'Files') {
-        const files = Array.from(clipboardData.files)
-        content.innerText = files.map(file => `${file.name} - ${file.type}, ${file.size}B`).join('\n')
-      } else {
-        content.innerText = data
-      }
       pasteDataElement.appendChild(div)
+
     })
+
+    // setup download link
+    const timestampString = new Date().toISOString().replace('T', '_').replaceAll(':', '-').replace('.', '-').replaceAll('-', '')
+
+    const downloadLink = document.querySelector('#download')
+    downloadLink.href = URL.createObjectURL(new Blob([JSON.stringify(pasteData)], {type: 'text/json'}));
+    downloadLink.download = `${timestampString}_paste.json`
   })
+
 </script>
 </body>
 </html>
