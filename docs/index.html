@@ -3,9 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <title>Copy Paste Debug</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    .header {
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+
+      padding: 16px;
+      border-bottom: 1px solid #ccc;
+    }
+  </style>
 </head>
 <body>
-<a id="download" href="#" type="text/json">download paste data</a>
+<div class="header">
+  <div><a id="download" href="#" type="text/json">download paste data</a></div>
+  <div><label>upload paste data: <input id="file-input" type="file" accept="application/json"></label></div>
+  <div>
+    <button id="copy-to-clipboard">copy to clipboard</button>
+  </div>
+</div>
 <h2>Paste types:</h2>
 <code id="paste-types">
   <i>paste content</i>
@@ -15,14 +36,46 @@
   <code><i>paste content</i></code>
 </div>
 <script>
+  let pasteData;
+
   document.body.addEventListener('paste', (e) => {
     const clipboardData = e.clipboardData;
 
-    const pasteData = clipboardDataToPasteData(clipboardData)
+    pasteData = clipboardDataToPasteData(clipboardData)
 
     renderPasteData(pasteData);
     setupPasteDataDownloadLink(pasteData);
   })
+
+  document.querySelector('#file-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return console.alert('no file selected');
+
+    const textFromFile = await new Promise((resolve, reject) => {
+      const fileReader = new FileReader();
+      fileReader.onload = (e) => resolve(e.target.result);
+      fileReader.onerror = reject;
+      fileReader.readAsText(file);
+    })
+
+    pasteData = JSON.parse(textFromFile);
+    renderPasteData(pasteData);
+    setupPasteDataDownloadLink(pasteData);
+  })
+
+  document.body.addEventListener('copy', (e) => {
+    e.preventDefault();
+    const clipboardData = e.clipboardData;
+    Object.entries(pasteData).forEach(([type, data]) => {
+      clipboardData.setData(type, data);
+    })
+  })
+
+  document.querySelector('#copy-to-clipboard').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.execCommand('copy');
+    }
+  )
 
   function clipboardDataToPasteData(clipboardData) {
     const types = clipboardData.types;
