@@ -1,135 +1,282 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Copy Paste Debug</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    .header {
-      display: flex;
-      gap: 16px;
-      justify-content: space-between;
-      align-items: center;
-
-      padding: 16px;
-      border-bottom: 1px solid #ccc;
-    }
-  </style>
-</head>
-<body>
-<div class="header">
-  <div><a id="download" href="#" type="text/json">download paste data</a></div>
-  <div><label>upload paste data: <input id="file-input" type="file" accept="application/json"></label></div>
-  <div>
-    <button id="copy-to-clipboard">copy to clipboard</button>
-  </div>
-</div>
-<h2>Paste types:</h2>
-<code id="paste-types">
-  <i>paste content</i>
-</code>
-<h2>Paste data:</h2>
-<div id="paste-data">
-  <code><i>paste content</i></code>
-</div>
-<script>
-  let pasteData;
-
-  document.body.addEventListener('paste', (e) => {
-    const clipboardData = e.clipboardData;
-
-    pasteData = clipboardDataToPasteData(clipboardData)
-
-    renderPasteData(pasteData);
-    setupPasteDataDownloadLink(pasteData);
-  })
-
-  document.querySelector('#file-input').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return console.alert('no file selected');
-
-    const textFromFile = await new Promise((resolve, reject) => {
-      const fileReader = new FileReader();
-      fileReader.onload = (e) => resolve(e.target.result);
-      fileReader.onerror = reject;
-      fileReader.readAsText(file);
-    })
-
-    pasteData = JSON.parse(textFromFile);
-    renderPasteData(pasteData);
-    setupPasteDataDownloadLink(pasteData);
-  })
-
-  document.body.addEventListener('copy', (e) => {
-    e.preventDefault();
-    const clipboardData = e.clipboardData;
-    Object.entries(pasteData).forEach(([type, data]) => {
-      clipboardData.setData(type, data);
-    })
-  })
-
-  document.querySelector('#copy-to-clipboard').addEventListener('click', (e) => {
-      e.preventDefault();
-      document.execCommand('copy');
-    }
-  )
-
-  function clipboardDataToPasteData(clipboardData) {
-    const types = clipboardData.types;
-
-    return types.reduce((acc, type) => {
-      const data = clipboardData.getData(type);
-
-      let pasteTypeData;
-      if (type === 'Files') {
-        const files = Array.from(clipboardData.files)
-        pasteTypeData = files.map(file => `${file.name} - ${file.type}, ${file.size}B`).join('\n')
-      } else {
-        pasteTypeData = data;
+  <head>
+    <meta charset="UTF-8" />
+    <title>Copy Paste Debug</title>
+    <style>
+      * {
+        box-sizing: border-box;
       }
 
-      return {
-        ...acc,
-        [type]: pasteTypeData,
+      .header {
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        align-items: center;
+
+        padding: 16px;
+        border-bottom: 1px solid #ccc;
       }
-    }, {})
-  }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div>
+        <a id="download" href="#" type="text/json">download paste data</a>
+      </div>
+      <div>
+        <label
+          >upload paste data:
+          <input id="file-input" type="file" accept="application/json"
+        /></label>
+      </div>
+      <div>
+        <button id="copy-to-clipboard">copy to clipboard</button>
+      </div>
+    </div>
+    <h2>Paste types:</h2>
+    <code id="paste-types">
+      <i>paste content</i>
+    </code>
+    <h2>Paste data:</h2>
+    <div id="paste-data">
+      <code><i>paste content</i></code>
+    </div>
+    <script>
+      let pasteData;
 
-  function renderPasteData(pasteData) {
-    document.querySelector('#paste-types').innerText = Object.keys(pasteData).join('\n')
+      document.body.addEventListener('paste', (e) => {
+        const clipboardData = e.clipboardData;
 
-    const pasteDataElement = document.querySelector('#paste-data');
-    pasteDataElement.innerHTML = '';
+        pasteData = clipboardDataToPasteData(clipboardData);
 
-    Object.entries(pasteData).map(([type, data]) => {
-      if (type.includes('text/')) {
-        console.log(`${type}:\n\n${JSON.stringify(data)}`);
+        renderPasteData(pasteData);
+        setupPasteDataDownloadLink(pasteData);
+      });
+
+      document
+        .querySelector('#file-input')
+        .addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return console.alert('no file selected');
+
+          const textFromFile = await new Promise((resolve, reject) => {
+            const fileReader = new FileReader();
+            fileReader.onload = (e) => resolve(e.target.result);
+            fileReader.onerror = reject;
+            fileReader.readAsText(file);
+          });
+
+          pasteData = JSON.parse(textFromFile);
+          renderPasteData(pasteData);
+          setupPasteDataDownloadLink(pasteData);
+        });
+
+      document.body.addEventListener('copy', (e) => {
+        e.preventDefault();
+        const clipboardData = e.clipboardData;
+        Object.entries(pasteData).forEach(([type, data]) => {
+          clipboardData.setData(type, data);
+        });
+      });
+
+      document
+        .querySelector('#copy-to-clipboard')
+        .addEventListener('click', (e) => {
+          e.preventDefault();
+          document.execCommand('copy');
+        });
+
+      function clipboardDataToPasteData(clipboardData) {
+        const types = clipboardData.types;
+
+        return types.reduce((acc, type) => {
+          const data = clipboardData.getData(type);
+
+          let pasteTypeData;
+          if (type === 'Files') {
+            const files = Array.from(clipboardData.files);
+            pasteTypeData = files
+              .map((file) => `${file.name} - ${file.type}, ${file.size}B`)
+              .join('\n');
+          } else {
+            pasteTypeData = data;
+          }
+
+          return {
+            ...acc,
+            [type]: pasteTypeData,
+          };
+        }, {});
       }
 
-      const div = document.createElement('div')
-      const heading = document.createElement('h3');
-      heading.innerText = `${type}`;
-      const content = document.createElement('code');
+      function renderPasteData(pasteData) {
+        document.querySelector('#paste-types').innerText =
+          Object.keys(pasteData).join('\n');
 
-      div.appendChild(heading);
-      div.appendChild(content)
+        const pasteDataElement = document.querySelector('#paste-data');
+        pasteDataElement.innerHTML = '';
 
-      content.innerText = data
+        Object.entries(pasteData).map(([type, data]) => {
+          if (type.includes('text/')) {
+            console.log(`📋 ${type}:\n\n${JSON.stringify(data)}`);
+          }
 
-      pasteDataElement.appendChild(div)
-    })
-  }
+          const div = document.createElement('div');
+          const heading = document.createElement('h3');
+          heading.style.display = 'flex';
+          heading.style.alignItems = 'center';
+          heading.style.gap = '8px';
 
-  function setupPasteDataDownloadLink(pasteData) {
-    const timestampString = new Date().toISOString().replace('T', '_').replaceAll(':', '-').replace('.', '-').replaceAll('-', '')
+          const typeText = document.createElement('span');
+          typeText.innerText = `${type}`;
+          heading.appendChild(typeText);
 
-    const downloadLink = document.querySelector('#download')
-    downloadLink.href = URL.createObjectURL(new Blob([JSON.stringify(pasteData)], {type: 'text/json'}));
-    downloadLink.download = `${timestampString}_paste.json`
-  }
-</script>
-</body>
+          // Add copy button for text types and other copyable types
+          if (
+            type.includes('text/') ||
+            type === 'text/plain' ||
+            type === 'text/html' ||
+            type === 'text/uri-list'
+          ) {
+            const copyButton = document.createElement('button');
+            copyButton.innerText = 'copy';
+            copyButton.style.fontSize = '12px';
+            copyButton.style.padding = '2px 6px';
+            copyButton.addEventListener('click', () =>
+              copyTypeToClipboard(type, data),
+            );
+            heading.appendChild(copyButton);
+
+            // Add "copy structure" button specifically for HTML
+            if (type === 'text/html') {
+              const copyStructureButton = document.createElement('button');
+              copyStructureButton.innerText = 'copy structure';
+              copyStructureButton.style.fontSize = '12px';
+              copyStructureButton.style.padding = '2px 6px';
+              copyStructureButton.style.marginLeft = '4px';
+              copyStructureButton.addEventListener('click', () =>
+                copyHtmlStructure(data),
+              );
+              heading.appendChild(copyStructureButton);
+            }
+          }
+
+          const content = document.createElement('code');
+
+          div.appendChild(heading);
+          div.appendChild(content);
+
+          content.innerText = data;
+
+          pasteDataElement.appendChild(div);
+        });
+      }
+
+      function copyTypeToClipboard(type, data) {
+        navigator.clipboard
+          .writeText(data)
+          .then(() => {
+            console.log(`📋 Copied ${type} to clipboard`);
+          })
+          .catch((err) => {
+            console.error('❌ Failed to copy to clipboard:', err);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = data;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            console.log(`📋 Copied ${type} to clipboard (fallback)`);
+          });
+      }
+
+      function copyHtmlStructure(htmlData) {
+        try {
+          // Create a temporary DOM element to parse the HTML
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = htmlData;
+
+          // Function to clean an element recursively
+          function cleanElement(element) {
+            // Remove style, class, and data attributes
+            const attributesToRemove = [];
+            for (let i = 0; i < element.attributes.length; i++) {
+              const attr = element.attributes[i];
+              if (
+                attr.name === 'style' ||
+                attr.name === 'class' ||
+                attr.name.startsWith('data-')
+              ) {
+                attributesToRemove.push(attr.name);
+              }
+            }
+            attributesToRemove.forEach((attrName) =>
+              element.removeAttribute(attrName),
+            );
+
+            // Process child nodes
+            for (let i = 0; i < element.childNodes.length; i++) {
+              const child = element.childNodes[i];
+
+              if (child.nodeType === Node.TEXT_NODE) {
+                // Truncate text content to first word
+                const text = child.textContent.trim();
+                if (text) {
+                  const firstWord = text.split(/\s+/)[0];
+                  child.textContent = firstWord;
+                }
+              } else if (child.nodeType === Node.ELEMENT_NODE) {
+                // Recursively clean child elements
+                cleanElement(child);
+              }
+            }
+          }
+
+          // Clean all child elements
+          Array.from(tempDiv.children).forEach(cleanElement);
+
+          const cleanedHtml = tempDiv.innerHTML;
+
+          navigator.clipboard
+            .writeText(cleanedHtml)
+            .then(() => {
+              console.log(`🏗️ Copied HTML structure to clipboard`);
+            })
+            .catch((err) => {
+              console.error(
+                '❌ Failed to copy HTML structure to clipboard:',
+                err,
+              );
+              // Fallback for older browsers
+              const textArea = document.createElement('textarea');
+              textArea.value = cleanedHtml;
+              document.body.appendChild(textArea);
+              textArea.select();
+              document.execCommand('copy');
+              document.body.removeChild(textArea);
+              console.log(`🏗️ Copied HTML structure to clipboard (fallback)`);
+            });
+        } catch (err) {
+          console.error('❌ Error processing HTML structure:', err);
+        }
+      }
+
+      function setupPasteDataDownloadLink(pasteData) {
+        const timestampString = new Date()
+          .toISOString()
+          .replace('T', '_')
+          .replaceAll(':', '-')
+          .replace('.', '-')
+          .replaceAll('-', '');
+
+        const downloadLink = document.querySelector('#download');
+        downloadLink.href = URL.createObjectURL(
+          new Blob([JSON.stringify(pasteData)], { type: 'text/json' }),
+        );
+        downloadLink.download = `${timestampString}_paste.json`;
+      }
+    </script>
+  </body>
 </html>
