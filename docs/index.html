@@ -353,19 +353,6 @@
               copyTypeToClipboard(type, data),
             );
             heading.appendChild(copyButton);
-
-            // Add "copy structure" button specifically for HTML
-            if (type === 'text/html') {
-              const copyStructureButton = document.createElement('button');
-              copyStructureButton.innerText = 'copy structure';
-              copyStructureButton.style.fontSize = '12px';
-              copyStructureButton.style.padding = '2px 6px';
-              copyStructureButton.style.marginLeft = '4px';
-              copyStructureButton.addEventListener('click', () =>
-                copyHtmlStructure(data),
-              );
-              heading.appendChild(copyStructureButton);
-            }
           }
 
           const content = document.createElement('code');
@@ -380,11 +367,47 @@
             if (window.Prism) {
               Prism.highlightElement(content);
             }
+
+            // Create HTML structure section
+            const structureDiv = document.createElement('div');
+            const structureHeading = document.createElement('h3');
+            structureHeading.style.display = 'flex';
+            structureHeading.style.alignItems = 'center';
+            structureHeading.style.gap = '8px';
+
+            const structureText = document.createElement('span');
+            structureText.innerText = 'HTML Structure';
+            structureHeading.appendChild(structureText);
+
+            const structureCopyButton = document.createElement('button');
+            structureCopyButton.innerText = 'copy';
+            structureCopyButton.style.fontSize = '12px';
+            structureCopyButton.style.padding = '2px 6px';
+
+            const structuredHtml = getHtmlStructure(data);
+            structureCopyButton.addEventListener('click', () =>
+              copyTypeToClipboard('HTML Structure', structuredHtml),
+            );
+            structureHeading.appendChild(structureCopyButton);
+
+            const structureContent = document.createElement('code');
+            structureContent.className = 'language-html';
+            structureContent.textContent = structuredHtml;
+
+            structureDiv.appendChild(structureHeading);
+            structureDiv.appendChild(structureContent);
+
+            pasteDataElement.appendChild(div);
+            pasteDataElement.appendChild(structureDiv);
+
+            // Apply syntax highlighting to structure
+            if (window.Prism) {
+              Prism.highlightElement(structureContent);
+            }
           } else {
             content.textContent = data;
+            pasteDataElement.appendChild(div);
           }
-
-          pasteDataElement.appendChild(div);
         });
       }
 
@@ -407,7 +430,7 @@
           });
       }
 
-      function copyHtmlStructure(htmlData) {
+      function getHtmlStructure(htmlData) {
         try {
           // Create a temporary DOM element to parse the HTML
           const tempDiv = document.createElement('div');
@@ -452,29 +475,10 @@
           // Clean all child elements
           Array.from(tempDiv.children).forEach(cleanElement);
 
-          const cleanedHtml = tempDiv.innerHTML;
-
-          navigator.clipboard
-            .writeText(cleanedHtml)
-            .then(() => {
-              console.log(`🏗️ Copied HTML structure to clipboard`);
-            })
-            .catch((err) => {
-              console.error(
-                '❌ Failed to copy HTML structure to clipboard:',
-                err,
-              );
-              // Fallback for older browsers
-              const textArea = document.createElement('textarea');
-              textArea.value = cleanedHtml;
-              document.body.appendChild(textArea);
-              textArea.select();
-              document.execCommand('copy');
-              document.body.removeChild(textArea);
-              console.log(`🏗️ Copied HTML structure to clipboard (fallback)`);
-            });
+          return tempDiv.innerHTML;
         } catch (err) {
           console.error('❌ Error processing HTML structure:', err);
+          return htmlData; // Return original if processing fails
         }
       }
 
