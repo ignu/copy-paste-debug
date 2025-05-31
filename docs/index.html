@@ -445,7 +445,12 @@
               if (
                 attr.name === 'style' ||
                 attr.name === 'class' ||
-                attr.name.startsWith('data-')
+                attr.name.startsWith('data-') ||
+                attr.name.startsWith('aria-') ||
+                attr.name === 'lang' ||
+                attr.name === 'xml:lang' ||
+                attr.name.startsWith('para') ||
+                attr.name.startsWith('cc')
               ) {
                 attributesToRemove.push(attr.name);
               }
@@ -453,6 +458,16 @@
             attributesToRemove.forEach((attrName) =>
               element.removeAttribute(attrName),
             );
+
+            // Replace img src with placeholder
+            if (element.tagName === 'IMG' && element.hasAttribute('src')) {
+              element.setAttribute('src', 'https://via.placeholder.com/150');
+            }
+
+            // Remove srcset attribute from images
+            if (element.tagName === 'IMG' && element.hasAttribute('srcset')) {
+              element.removeAttribute('srcset');
+            }
 
             // Process child nodes
             for (let i = 0; i < element.childNodes.length; i++) {
